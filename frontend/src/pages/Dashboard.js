@@ -39,28 +39,28 @@ const Dashboard = () => {
     {
       title: 'Browse Products',
       description: 'Find affordable medical supplies',
-      icon: '🛍️',
+      icon: '',
       link: '/products',
       color: 'from-teal-500 to-teal-600'
     },
     {
       title: 'Add Product',
       description: 'Sell your surplus medicines',
-      icon: '➕',
+      icon: '',
       link: '/add-product',
       color: 'from-emerald-500 to-emerald-600'
     },
     {
       title: 'Health Assistant',
       description: 'Get AI-powered health advice',
-      icon: '🤖',
+      icon: '',
       link: '/health-assistant',
       color: 'from-cyan-500 to-cyan-600'
     },
     {
       title: 'Emergency',
       description: 'Need immediate help?',
-      icon: '🚨',
+      icon: '',
       link: '/emergency-contacts',
       color: 'from-rose-500 to-rose-600'
     }
@@ -83,7 +83,7 @@ const Dashboard = () => {
               {user && (
                 <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 inline-block mb-6">
                   <p className="text-2xl font-semibold text-teal-700">
-                    Welcome, {user.name}! 👋
+                    Welcome, {user.name}! 
                   </p>
                   <p className="text-sm text-teal-600">{user.role}</p>
                 </div>
@@ -93,13 +93,13 @@ const Dashboard = () => {
                   to="/products"
                   className="bg-white text-teal-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-teal-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
-                  🛍️ Shop Now
+                   Shop Now
                 </Link>
                 <Link
                   to="/add-product"
                   className="bg-teal-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-teal-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
-                  💰 Sell Now
+                   Sell Now
                 </Link>
               </div>
             </div>
@@ -231,7 +231,7 @@ const Dashboard = () => {
                 className="bg-white rounded-2xl p-6 text-center shadow-md hover:shadow-xl transition-all border-2 border-transparent hover:border-teal-500 group"
               >
                 <div className="text-4xl mb-3">
-                  {category === 'Medicine' ? '💊' : '🏥'}
+                  {category === 'Medicine' ? '' : ''}
                 </div>
                 <p className="font-semibold text-gray-800 group-hover:text-teal-600 transition-colors">
                   {category}
@@ -247,7 +247,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 flex items-center gap-3">
-              ⭐ Featured Products
+               Featured Products
             </h2>
             <Link
               to="/products"
@@ -264,7 +264,7 @@ const Dashboard = () => {
             </div>
           ) : featuredProducts.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-3xl shadow-lg">
-              <div className="text-6xl mb-4">📦</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="text-2xl font-semibold text-gray-600 mb-2">No products yet</h3>
               <p className="text-gray-500 mb-6">Be the first one to add products!</p>
               <Link
@@ -292,7 +292,7 @@ const Dashboard = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-6xl">📦</div>
+                        <div className="text-6xl"></div>
                       </div>
                     )}
                     {product.quantity <= 5 && product.quantity > 0 && (
@@ -348,22 +348,22 @@ const Dashboard = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center p-6 bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl">
-              <div className="text-5xl mb-4">💰</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="font-bold text-lg mb-2 text-gray-800">Best Prices</h3>
               <p className="text-gray-600 text-sm">Lowest prices, same quality</p>
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl">
-              <div className="text-5xl mb-4">✅</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="font-bold text-lg mb-2 text-gray-800">Verified Sellers</h3>
               <p className="text-gray-600 text-sm">Only trusted sellers</p>
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl">
-              <div className="text-5xl mb-4">🚀</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="font-bold text-lg mb-2 text-gray-800">Fast Delivery</h3>
               <p className="text-gray-600 text-sm">Quick local delivery</p>
             </div>
             <div className="text-center p-6 bg-gradient-to-br from-sky-50 to-sky-100 rounded-2xl">
-              <div className="text-5xl mb-4">🤖</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="font-bold text-lg mb-2 text-gray-800">AI Health Help</h3>
               <p className="text-gray-600 text-sm">24/7 health assistant</p>
             </div>
@@ -375,11 +375,11 @@ const Dashboard = () => {
       <section className="py-12 px-4 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            🎯 Our Services
+             Our Services
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Link to="/products" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-blue-500">
-              <div className="text-5xl mb-4">🛍️</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-blue-600">Products Marketplace</h3>
               <p className="text-gray-600 mb-4">Browse karo surplus medicines aur equipment</p>
               <div className="text-blue-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -389,7 +389,7 @@ const Dashboard = () => {
 
             {user?.role === 'Patient' && (
               <Link to="/orders" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-purple-500">
-                <div className="text-5xl mb-4">📦</div>
+                <div className="text-5xl mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-purple-600">My Orders</h3>
                 <p className="text-gray-600 mb-4">Apne orders track karo easily</p>
                 <div className="text-purple-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -399,7 +399,7 @@ const Dashboard = () => {
             )}
 
             <Link to="/add-product" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-green-500">
-              <div className="text-5xl mb-4">➕</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-green-600">Sell Products</h3>
               <p className="text-gray-600 mb-4">Apne surplus products bechkar paisa kamao</p>
               <div className="text-green-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -408,7 +408,7 @@ const Dashboard = () => {
             </Link>
 
             <Link to="/health-assistant" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-purple-500">
-              <div className="text-5xl mb-4">🤖</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-purple-600">AI Health Assistant</h3>
               <p className="text-gray-600 mb-4">24/7 health advice aur first-aid info</p>
               <div className="text-purple-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -417,7 +417,7 @@ const Dashboard = () => {
             </Link>
 
             <Link to="/health-tips" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-indigo-500">
-              <div className="text-5xl mb-4">💡</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-indigo-600">Health Tips</h3>
               <p className="text-gray-600 mb-4">Hygiene, disease prevention aur wellness tips</p>
               <div className="text-indigo-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -426,7 +426,7 @@ const Dashboard = () => {
             </Link>
 
             <Link to="/emergency-contacts" className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all group border-2 border-transparent hover:border-red-500">
-              <div className="text-5xl mb-4">🚨</div>
+              <div className="text-5xl mb-4"></div>
               <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-red-600">Emergency Contacts</h3>
               <p className="text-gray-600 mb-4">Quick access to emergency services 24/7</p>
               <div className="text-red-600 font-semibold group-hover:translate-x-2 transition-transform inline-block">
@@ -441,7 +441,7 @@ const Dashboard = () => {
       <section className="py-16 px-4 bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to Save Money on Healthcare? 💰
+            Ready to Save Money on Healthcare? 
           </h2>
           <p className="text-xl mb-8 opacity-90">
             Join thousands using MediMitra for affordable medical supplies
@@ -451,13 +451,13 @@ const Dashboard = () => {
               to="/products"
               className="bg-white text-teal-600 px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              🛍️ Start Shopping
+               Start Shopping
             </Link>
             <Link
               to="/add-product"
               className="bg-teal-700 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-teal-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-white"
             >
-              💰 Start Selling
+               Start Selling
             </Link>
           </div>
         </div>
@@ -469,7 +469,7 @@ const Dashboard = () => {
           <blockquote className="text-2xl md:text-3xl font-light italic mb-4">
             "Your Health, Our Mission. Your Savings, Our Goal."
           </blockquote>
-          <p className="text-gray-400">🏥 MediMitra - Your Trusted Healthcare Partner</p>
+          <p className="text-gray-400"> MediMitra - Your Trusted Healthcare Partner</p>
         </div>
       </section>
     </div>
