@@ -2,6 +2,12 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
+import {
+  PlusCircle, Package, Tag, Calendar,
+  MapPin, Upload, X, Check, AlertCircle,
+  Stethoscope, Info, ChevronRight, ArrowLeft,
+  ShieldCheck
+} from 'lucide-react';
 
 const AddProduct = () => {
   const [name, setName] = useState('');
@@ -14,13 +20,12 @@ const AddProduct = () => {
   const [category, setCategory] = useState('Medicine');
   const [society, setSociety] = useState('');
   const [pincode, setPincode] = useState('');
-  const [photos, setPhotos] = useState([]);
-  const [photoUrls, setPhotoUrls] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
@@ -35,7 +40,7 @@ const AddProduct = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       let uploadedPhotoUrls = [];
       if (selectedFiles.length > 0) {
@@ -51,7 +56,7 @@ const AddProduct = () => {
         uploadedPhotoUrls = await Promise.all(uploadPromises);
         setUploading(false);
       }
-      
+
       await axios.post('http://localhost:5000/api/products', {
         name,
         brand,
@@ -63,9 +68,9 @@ const AddProduct = () => {
         category,
         society,
         pincode,
-        photos: uploadedPhotoUrls.length > 0 ? uploadedPhotoUrls : photos.split(',').map(url => url.trim()).filter(url => url)
+        photos: uploadedPhotoUrls
       });
-      
+
       setSuccess(true);
       setTimeout(() => navigate('/products'), 1500);
     } catch (err) {
@@ -81,353 +86,310 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-75"></div>
-      </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-400 hover:text-teal-600 font-bold text-xs uppercase tracking-widest mb-8 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Go Back
+        </button>
 
-      <div className="relative max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-2 text-teal-600 font-black text-xs uppercase tracking-widest mb-3">
+              <PlusCircle className="w-4 h-4" /> Marketplace Listing
+            </div>
+            <h1 className="text-5xl font-black text-gray-900 tracking-tighter uppercase leading-none">
+              Sell <span className="text-teal-600">Medicine</span>
+            </h1>
+            <p className="text-gray-500 font-medium mt-3">Help someone in need and earn from your surplus inventory.</p>
           </div>
-          <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 mb-2">
-            Add New Product
-          </h2>
-          <p className="text-gray-600">List your medicine or medical equipment</p>
+          <div className="hidden lg:block">
+            <div className="px-6 py-4 bg-teal-600 text-white rounded-3xl shadow-xl shadow-teal-500/20 flex items-center gap-4">
+              <ShieldCheck className="w-8 h-8 opacity-50" />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Authenticated</p>
+                <p className="text-sm font-bold">Safe Transactions</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Success Message */}
+        {/* Success/Error Alerts */}
         {success && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-md animate-slide-down">
-            <div className="flex items-center">
-              <svg className="w-6 h-6 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <p className="text-green-800 font-medium">Product added successfully! Redirecting...</p>
+          <div className="mb-8 p-6 bg-emerald-50 border border-emerald-100 rounded-[32px] text-emerald-700 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
+            <div className="p-3 bg-emerald-500 rounded-2xl text-white">
+              <Check className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-black uppercase tracking-tight">Listing Created!</p>
+              <p className="text-sm font-medium opacity-80">Your product is now live on the marketplace. Redirecting...</p>
             </div>
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md animate-slide-down">
-            <div className="flex items-center">
-              <svg className="w-6 h-6 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <p className="text-red-800 font-medium">{error}</p>
+          <div className="mb-8 p-6 bg-red-50 border border-red-100 rounded-[32px] text-red-600 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
+            <div className="p-3 bg-red-500 rounded-2xl text-white">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-black uppercase tracking-tight">Submission Failed</p>
+              <p className="text-sm font-medium opacity-80">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 animate-slide-up">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Product Information Section */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <span className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm mr-3">1</span>
-                Product Information
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+        {/* Main Form */}
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Step 1: Core Information */}
+          <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 p-8 md:p-12 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white font-black text-xl">1</div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Core Details</h3>
+                  <p className="text-sm text-gray-500 font-medium">Identify your product clearly</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Product Identity</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                    placeholder="e.g., Paracetamol 500mg"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
+                    placeholder="e.g. Paracetamol 500mg"
                     required
                   />
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Manufacturer/Brand</label>
                   <input
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                    placeholder="e.g., Crocin"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
+                    placeholder="e.g. GlaxoSmithKline"
                     required
                   />
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Generic Name *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Active Ingredient (Generic)</label>
                   <input
                     type="text"
                     value={genericName}
                     onChange={(e) => setGenericName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                    placeholder="e.g., Acetaminophen"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
+                    placeholder="e.g. Acetaminophen"
                     required
                   />
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Classification Category</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200 bg-white"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-black uppercase appearance-none"
                   >
-                    <option value="Medicine">💊 Medicine</option>
-                    <option value="Medical Equipment">🏥 Medical Equipment</option>
+                    <option value="Medicine">Medicine 💊</option>
+                    <option value="Medical Equipment">Equipment 🏥</option>
                   </select>
                 </div>
               </div>
 
-              <div className="mt-6 transform transition-all duration-200 hover:scale-105">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+              <div className="mt-8 space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Clinical Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
                   rows="4"
-                  placeholder="Describe the product, its uses, and any important details..."
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-medium"
+                  placeholder="Enter indications, dosage, and storage instructions..."
                   required
                 />
               </div>
             </div>
+          </div>
 
-            {/* Pricing & Inventory Section */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <span className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm mr-3">2</span>
-                Pricing & Inventory
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+          {/* Step 2: Inventory & Log */}
+          <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 p-8 md:p-12 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white font-black text-xl">2</div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Inventory Control</h3>
+                  <p className="text-sm text-gray-500 font-medium">Pricing and viability data</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Pricing (₹)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3.5 text-gray-500">₹</span>
+                    <span className="absolute left-6 top-4 font-black text-teal-600">₹</span>
                     <input
                       type="number"
-                      step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
+                      className="w-full pl-11 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-black"
                       placeholder="0.00"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Available Units</label>
                   <input
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
                     placeholder="0"
                     required
                   />
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Expiration Timeline</label>
                   <input
                     type="date"
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
                     required
                   />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Location Section */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <span className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm mr-3">3</span>
-                Location Details
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Society/Area *</label>
+          {/* Step 3: Media & Location */}
+          <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 p-8 md:p-12 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-white font-black text-xl">3</div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Media & Logistics</h3>
+                  <p className="text-sm text-gray-500 font-medium">Help buyers find and trust you</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Local Area/Society</label>
                   <input
                     type="text"
                     value={society}
                     onChange={(e) => setSociety(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                    placeholder="e.g., Green Valley Society"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
+                    placeholder="Sector 14, Galaxy Enclave"
                     required
                   />
                 </div>
 
-                <div className="transform transition-all duration-200 hover:scale-105">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Pincode *</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Pincode</label>
                   <input
                     type="text"
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                    placeholder="e.g., 400001"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all text-sm font-bold"
+                    placeholder="400001"
                     required
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Photos Section */}
-            <div className="pb-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <span className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm mr-3">4</span>
-                Product Photos
-              </h3>
-              
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-500 transition duration-200">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="flex flex-col items-center">
-                    <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-gray-600 mb-1">Click to upload photos</p>
-                    <p className="text-sm text-gray-500">or drag and drop</p>
-                  </div>
-                </label>
-              </div>
-
-              {selectedFiles.length > 0 && (
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {selectedFiles.map((file, index) => (
-                    <div key={index} className="relative group animate-scale-in">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg shadow-md group-hover:shadow-xl transition duration-200"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200 hover:bg-red-600"
-                      >
-                        ×
-                      </button>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Visual Proof (Photos)</label>
+                <div className="border-2 border-dashed border-gray-200 rounded-[32px] p-12 text-center hover:border-teal-500 transition-all bg-gray-50/50">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center">
+                      <Upload className="w-12 h-12 text-teal-600 mb-4 opacity-50" />
+                      <p className="text-lg font-black text-gray-900 uppercase tracking-tighter">Upload Evidence</p>
+                      <p className="text-xs text-gray-400 font-bold uppercase mt-1">PNG, JPG up to 10MB</p>
                     </div>
-                  ))}
+                  </label>
                 </div>
-              )}
-            </div>
 
-            {/* Submit Button */}
-            <div className="pt-6">
-              <button
-                type="submit"
-                disabled={loading || uploading}
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {uploading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Uploading Photos...
-                  </span>
-                ) : loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Adding Product...
-                  </span>
-                ) : (
-                  '✓ Add Product'
+                {selectedFiles.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="relative group aspect-square rounded-[24px] overflow-hidden border border-gray-100 shadow-sm animate-in zoom-in-75">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-xl w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
-          </form>
-        </div>
+          </div>
+
+          {/* Submit Action */}
+          <div className="pt-8 mb-12">
+            <button
+              type="submit"
+              disabled={loading || uploading}
+              className="w-full py-6 bg-gray-900 text-white rounded-[32px] font-black text-xl uppercase tracking-tighter shadow-2xl hover:bg-black transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4"
+            >
+              {uploading ? (
+                <>
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Syncing Assets...
+                </>
+              ) : loading ? (
+                <>
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  <Check className="w-6 h-6" />
+                  INITIATE LISTING
+                </>
+              )}
+            </button>
+            <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-6">
+              By listing, you agree to our pharmaceutical verification protocols.
+            </p>
+          </div>
+        </form>
       </div>
-
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slide-down {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes scale-in {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.8s ease-out;
-        }
-
-        .animate-slide-down {
-          animation: slide-down 0.5s ease-out;
-        }
-
-        .animate-scale-in {
-          animation: scale-in 0.4s ease-out;
-        }
-
-        .delay-75 {
-          animation-delay: 1s;
-        }
-      `}</style>
     </div>
   );
 };

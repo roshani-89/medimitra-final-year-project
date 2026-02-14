@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, User, Send, Trash2, RefreshCw, Sparkles, Heart, AlertCircle } from 'lucide-react';
+import {
+  Bot, User, Send, Trash2, RefreshCw,
+  Sparkles, Heart, AlertCircle, ShieldCheck,
+  ChevronRight, ArrowLeft, MessageSquare,
+  Activity, Info, Zap
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const HealthAssistant = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([
-    { 
-      text: "Hello! 👋 I'm your AI-powered health assistant. How can I help you today?", 
-      sender: 'bot' 
+    {
+      text: "Hello! 👋 I'm your AI-powered Health Companion. How can I assist you in your wellness journey today?",
+      sender: 'bot'
     }
   ]);
   const [input, setInput] = useState('');
@@ -19,23 +26,58 @@ const HealthAssistant = () => {
   }, []);
 
   const checkBackend = async () => {
+    setBackendStatus('checking');
     try {
-      const response = await fetch('http://localhost:5000/api/chatbot/test', {
-        method: 'GET',
-      });
-      
+      const response = await fetch('http://localhost:5000/api/chatbot/test');
       if (response.ok) {
         setBackendStatus('connected');
         setError(null);
       } else {
-        setBackendStatus('error');
-        setError('Backend is not responding properly');
+        throw new Error();
       }
     } catch (err) {
       setBackendStatus('error');
-      setError('Cannot connect to backend. Make sure server is running on port 5000');
-      console.error('Backend connection error:', err);
+      // No longer setting global error here, we'll handle it in the chat
     }
+  };
+
+  const getFallbackResponse = (userInput) => {
+    const input = userInput.toLowerCase();
+
+    const responses = [
+      {
+        keywords: ['emergency', 'accident', 'serious', 'help', 'ambulance', 'hospital'],
+        response: "🚨 IF THIS IS A MEDICAL EMERGENCY, PLEASE CALL 108 (IN INDIA) OR YOUR LOCAL EMERGENCY NUMBER IMMEDIATELY. You can also visit our Emergency Contacts page for more information."
+      },
+      {
+        keywords: ['buy', 'order', 'purchase', 'get', 'product', 'medicine'],
+        response: "To buy medical supplies, please navigate to the 'Products' section. You can search for items, add them to your cart, and proceed to checkout with our secure payment system."
+      },
+      {
+        keywords: ['payment', 'pay', 'cash', 'card', 'razorpay', 'cod'],
+        response: "We support multiple secure payment methods including Online Payments (Razorpay), Credit/Debit Cards, UPI, and Cash on Delivery (COD)."
+      },
+      {
+        keywords: ['track', 'where', 'order status', 'delivery'],
+        response: "You can track your orders in the 'Order History' section of your profile. Each order has a live tracking timeline with its current status."
+      },
+      {
+        keywords: ['hi', 'hello', 'hey', 'greetings'],
+        response: "Hello! I'm currently in Offline Support Mode due to a network issue, but I can still help with common questions about orders, payments, and emergencies. How can I assist you?"
+      },
+      {
+        keywords: ['account', 'profile', 'login', 'register'],
+        response: "You can manage your personal details, delivery addresses, and order history in your Profile section. If you need to change your password, check the Security tab."
+      }
+    ];
+
+    for (const item of responses) {
+      if (item.keywords.some(keyword => input.includes(keyword))) {
+        return item.response;
+      }
+    }
+
+    return "I'm currently having trouble connecting to my primary knowledge core, but I'm here in Offline Mode. I can help with general information about orders, payments, and emergency protocols. Could you please rephrase or try again in a few minutes?";
   };
 
   const scrollToBottom = () => {
@@ -47,326 +89,181 @@ const HealthAssistant = () => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-
-    if (backendStatus === 'error') {
-      alert('Backend server is not running. Please start the server first.');
-      return;
-    }
+    if (!input.trim() || loading) return;
 
     const userMessage = { text: input, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
     const currentInput = input;
     setInput('');
     setLoading(true);
-    setError(null);
 
-    try {
-      const response = await fetch('http://localhost:5000/api/chatbot/ask', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: currentInput,
-          conversationHistory: messages
-        })
-      });
+    // Try API first
+    if (backendStatus === 'connected') {
+      try {
+        const response = await fetch('http://localhost:5000/api/chatbot/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: currentInput,
+            conversationHistory: messages
+          })
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || 'Server error: ' + response.status);
+        if (!response.ok) throw new Error('API Sync Failed');
+
+        const data = await response.json();
+        setMessages(prev => [...prev, {
+          text: data.response,
+          sender: 'bot',
+          isEmergency: data.isEmergency || false
+        }]);
+        setLoading(false);
+        return;
+      } catch (error) {
+        console.error('Chatbot API Error:', error);
+        // Fall through to local fallback
       }
+    }
 
-      const data = await response.json();
-      const botMessage = { 
-        text: data.response, 
+    // Fallback logic for offline or API error
+    setTimeout(() => {
+      const fallbackText = getFallbackResponse(currentInput);
+      setMessages(prev => [...prev, {
+        text: fallbackText,
         sender: 'bot',
-        isEmergency: data.isEmergency || false
-      };
-      setMessages(prev => [...prev, botMessage]);
-
-    } catch (error) {
-      let errorMsg = '';
-      if (error.message.includes('Failed to fetch')) {
-        errorMsg = 'Cannot connect to server. Please ensure backend is running on http://localhost:5000';
-        setBackendStatus('error');
-      } else {
-        errorMsg = 'Sorry, I encountered an error. Please try again later.';
-      }
-      
-      setError(errorMsg);
-      const errorMessage = { 
-        text: errorMsg, 
-        sender: 'bot',
-        isError: true
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
+        isOfflineMode: true,
+        isEmergency: currentInput.toLowerCase().includes('emergency')
+      }]);
       setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const clearChat = () => {
-    setMessages([
-      { 
-        text: "Chat cleared! How can I help you today?", 
-        sender: 'bot' 
-      }
-    ]);
-    setError(null);
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 py-8 px-4">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-      </div>
-
-      <div className="relative max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-6 rounded-t-3xl shadow-2xl">
-          <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Premium Header */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors text-gray-500"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-white bg-opacity-20 rounded-2xl backdrop-blur-sm">
-                <Bot className="w-10 h-10" />
+              <div className="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-teal-500/20">
+                <Bot className="w-7 h-7" />
               </div>
               <div>
-                <h2 className="text-3xl font-extrabold flex items-center gap-2">
-                  AI Health Assistant
-                  <Sparkles className="w-6 h-6 text-yellow-300 animate-pulse" />
-                </h2>
-                <p className="text-sm mt-1 text-teal-100 flex items-center gap-2">
-                  <span className="font-medium">Powered by OpenAI</span>
-                  <span className="flex items-center gap-1">
-                    <span className={`w-2 h-2 rounded-full ${
-                      backendStatus === 'connected' ? 'bg-green-300 animate-pulse' : 
-                      backendStatus === 'error' ? 'bg-red-300' : 
-                      'bg-yellow-300 animate-pulse'
-                    }`}></span>
-                    <span className="text-xs">
-                      {backendStatus === 'connected' && '✓ Connected'}
-                      {backendStatus === 'error' && '✗ Disconnected'}
-                      {backendStatus === 'checking' && '⟳ Connecting...'}
-                    </span>
+                <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter leading-none">Health <span className="text-teal-600">Assistant</span></h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className={`w-2 h-2 rounded-full ${backendStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                    {backendStatus === 'connected' ? 'Core Active' : 'System Offline'}
                   </span>
-                </p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={checkBackend}
-                className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl text-sm font-medium transition-all transform hover:scale-105 backdrop-blur-sm"
-                title="Check connection"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Reconnect
-              </button>
-              <button
-                onClick={clearChat}
-                className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl text-sm font-medium transition-all transform hover:scale-105 backdrop-blur-sm"
-                title="Clear chat"
-              >
-                <Trash2 className="w-4 h-4" />
-                Clear
-              </button>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={checkBackend}
+              className="hidden md:flex items-center gap-2 px-6 py-3 bg-gray-50 text-gray-600 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-200"
+            >
+              <RefreshCw className={`w-4 h-4 ${backendStatus === 'checking' ? 'animate-spin' : ''}`} /> Sync System
+            </button>
+            <button
+              onClick={() => setMessages([{ text: "Session Reset. How can I help?", sender: 'bot' }])}
+              className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Error Alert */}
+      {/* Chat Area */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-12 overflow-y-auto">
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 flex items-start gap-3 animate-shake">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-semibold text-red-800">Connection Error</p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
-              <button 
-                onClick={checkBackend}
-                className="mt-2 bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-red-600 transition-all transform hover:scale-105 font-medium"
-              >
-                Try Reconnecting
-              </button>
-            </div>
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-3xl text-red-600 flex items-center gap-3 text-sm font-bold animate-in bounce-in">
+            <AlertCircle className="w-5 h-5" /> {error}
           </div>
         )}
 
-        {/* Chat Messages */}
-        <div className="bg-white shadow-2xl h-[500px] overflow-y-auto p-6 space-y-4 scroll-smooth">
-          {messages.map((message, index) => (
-            <div 
-              key={index} 
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} animate-slide-in`}
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <div className={`flex gap-3 max-w-2xl ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Avatar */}
-                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                  message.sender === 'user' 
-                    ? 'bg-gradient-to-br from-teal-500 to-cyan-500' 
-                    : message.isEmergency 
-                    ? 'bg-gradient-to-br from-red-500 to-pink-500'
-                    : 'bg-gradient-to-br from-emerald-500 to-teal-500'
-                }`}>
-                  {message.sender === 'user' ? (
-                    <User className="w-5 h-5 text-white" />
-                  ) : (
-                    <Bot className="w-5 h-5 text-white" />
-                  )}
+        <div className="space-y-8 pb-20">
+          {messages.map((m, idx) => (
+            <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
+              <div className={`flex gap-4 max-w-[85%] ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-white font-bold shadow-lg ${m.sender === 'user' ? 'bg-gray-900' : m.isEmergency ? 'bg-red-600' : 'bg-teal-600'
+                  }`}>
+                  {m.sender === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                 </div>
-
-                {/* Message Bubble */}
-                <div className={`px-5 py-3 rounded-2xl shadow-md ${
-                  message.sender === 'user'
-                    ? 'bg-gradient-to-br from-teal-500 to-cyan-500 text-white rounded-tr-none'
-                    : message.isEmergency
-                    ? 'bg-red-50 text-red-900 border-2 border-red-300 rounded-tl-none'
-                    : message.isError
-                    ? 'bg-yellow-50 text-yellow-900 border border-yellow-300 rounded-tl-none'
-                    : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-tl-none'
-                }`}>
-                  <p className="whitespace-pre-wrap leading-relaxed text-sm">{message.text}</p>
-                  {message.isEmergency && (
-                    <div className="mt-2 pt-2 border-t border-red-300">
-                      <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        Emergency Alert - Seek immediate medical attention
-                      </p>
+                <div className={`p-6 rounded-[32px] text-sm font-medium leading-relaxed shadow-sm ${m.sender === 'user'
+                  ? 'bg-gray-900 text-white rounded-tr-none'
+                  : m.isEmergency
+                    ? 'bg-red-50 text-red-900 border border-red-100 rounded-tl-none'
+                    : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                  }`}>
+                  {m.text}
+                  {m.isOfflineMode && (
+                    <div className="mt-4 pt-4 border-t border-teal-50 flex items-center gap-2 text-teal-600 font-black uppercase text-[9px] tracking-widest">
+                      <Zap className="w-3.5 h-3.5" /> Local System Response (Offline Mode)
+                    </div>
+                  )}
+                  {m.isEmergency && (
+                    <div className="mt-4 pt-4 border-t border-red-200 flex items-center gap-2 text-red-600 font-black uppercase text-[10px] tracking-widest">
+                      <AlertCircle className="w-4 h-4" /> Immediate Medical Attention Required
                     </div>
                   )}
                 </div>
               </div>
             </div>
           ))}
-          
-          {/* Loading Indicator */}
+
           {loading && (
-            <div className="flex justify-start animate-slide-in">
-              <div className="flex gap-3 max-w-2xl">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+            <div className="flex justify-start animate-pulse">
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-2xl bg-teal-100 flex items-center justify-center text-teal-600">
+                  <Zap className="w-5 h-5" />
                 </div>
-                <div className="bg-gray-50 border border-gray-200 px-5 py-3 rounded-2xl rounded-tl-none shadow-md">
-                  <div className="flex items-center gap-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                    <span className="text-sm text-gray-600 font-medium">AI is thinking...</span>
-                  </div>
+                <div className="px-6 py-4 bg-white border border-gray-100 rounded-[32px] rounded-tl-none text-gray-400 text-xs font-black uppercase tracking-widest">
+                  Processing Query...
                 </div>
               </div>
             </div>
           )}
-          
           <div ref={messagesEndRef} />
         </div>
+      </main>
 
-        {/* Input Area */}
-        <div className="bg-white p-6 rounded-b-3xl shadow-2xl border-t-2 border-gray-100">
-          <div className="flex gap-3">
+      {/* Input Console */}
+      <div className="bg-white border-t border-gray-100 p-6 sticky bottom-0 z-40">
+        <div className="max-w-5xl mx-auto flex gap-4">
+          <div className="relative flex-1 group">
+            <MessageSquare className="absolute left-6 top-5 w-5 h-5 text-gray-300 group-focus-within:text-teal-600 transition-colors" />
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your health question here..."
-              className="flex-1 px-5 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-sm"
-              disabled={loading || backendStatus === 'error'}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Query health data, symptoms, or first-aid protocols..."
+              className="w-full pl-14 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-[32px] focus:outline-none focus:ring-4 focus:ring-teal-500/10 transition-all font-medium text-sm"
+              disabled={loading}
             />
-            <button
-              onClick={handleSend}
-              disabled={loading || !input.trim() || backendStatus === 'error'}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-8 py-4 rounded-2xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold flex items-center gap-2 transform hover:scale-105 disabled:transform-none"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Sending
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Send
-                </>
-              )}
-            </button>
           </div>
-          
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
-              <Heart className="w-3 h-3 text-red-400" />
-              This AI provides general health information only. Always consult healthcare professionals.
-            </p>
-          </div>
+          <button
+            onClick={handleSend}
+            disabled={loading || !input.trim()}
+            className="px-10 bg-teal-600 text-white rounded-[32px] font-black uppercase tracking-tighter shadow-2xl shadow-teal-500/30 hover:bg-teal-700 transition-all flex items-center gap-3 disabled:opacity-50"
+          >
+            Execute <Send className="w-5 h-5" />
+          </button>
         </div>
-
-        {/* Quick Suggestions */}
-        <div className="mt-6 bg-white p-6 rounded-3xl shadow-xl">
-          <p className="text-sm text-gray-700 mb-3 font-bold flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-teal-500" />
-            Quick Questions to Try:
-          </p>
-          <div className="flex flex-wrap gap-3">
-            {[
-              { text: '🤒 What should I do for fever?', icon: '🤒' },
-              { text: '🤧 Home remedies for cold', icon: '🤧' },
-              { text: '🩹 First aid for minor cuts', icon: '🩹' },
-              { text: '💧 How to stay hydrated?', icon: '💧' }
-            ].map((suggestion, idx) => (
-              <button
-                key={idx}
-                onClick={() => setInput(suggestion.text)}
-                className="group px-4 py-2.5 bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 text-teal-700 text-sm rounded-xl border-2 border-teal-200 hover:border-teal-300 transition-all transform hover:scale-105 font-medium shadow-sm hover:shadow-md"
-                disabled={loading || backendStatus === 'error'}
-              >
-                {suggestion.text}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+          <ShieldCheck className="w-3 h-3 text-teal-500" /> AI Consultation is for informational purposes only.
+        </p>
       </div>
-
-      <style jsx>{`
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-
-        .animate-shake {
-          animation: shake 0.3s ease-out;
-        }
-
-        .scroll-smooth {
-          scroll-behavior: smooth;
-        }
-      `}</style>
     </div>
   );
 };

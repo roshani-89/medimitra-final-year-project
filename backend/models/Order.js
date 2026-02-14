@@ -26,19 +26,39 @@ const orderSchema = new mongoose.Schema({
     default: 'Pending',
   },
   deliveryAddress: {
+    fullName: String,
     society: String,
     pincode: String,
     mobile: String,
+    landmark: String,
+    addressType: String,
   },
   paymentMethod: {
     type: String,
-    enum: ['card', 'upi', 'cod'],
+    enum: ['card', 'upi', 'cod', 'razorpay', 'demo', 'online'],
     default: 'cod',
   },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
+    default: 'Pending',
+  },
+  razorpay_order_id: String,
+  razorpay_payment_id: String,
+  razorpay_signature: String,
   orderId: {
     type: String,
     unique: true,
   },
+  trackingId: String,
+  statusHistory: [{
+    status: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    message: String
+  }],
+  deliveredAt: Date,
+  cancelledAt: Date,
+  cancellationReason: String,
 }, {
   timestamps: true,
 });

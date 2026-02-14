@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const cron = require('node-cron');
+const Product = require('./models/Product');
 
 
 dotenv.config();
@@ -35,14 +37,26 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/medimitra
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected'))
-.catch(err => console.error('❌ MongoDB error:', err));
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB error:', err));
+
+// Cron job to remove expired products daily at midnight
+cron.schedule('0 0 * * *', async () => {
+  try {
+    console.log('🗑️ Running daily expired products cleanup...');
+    const currentDate = new Date();
+    const result = await Product.deleteMany({ expiryDate: { $lt: currentDate } });
+    console.log(`✅ Deleted ${result.deletedCount} expired products`);
+  } catch (error) {
+    console.error('❌ Error during expired products cleanup:', error);
+  }
+});
 
 // Check OpenAI setup
 let OpenAI, openai;
 try {
   OpenAI = require('openai');
-  
+
   if (!process.env.OPENAI_API_KEY) {
     console.error('\n❌ CRITICAL: OPENAI_API_KEY not found in .env file!');
     console.error('   Add this line to .env: OPENAI_API_KEY=sk-your-key-here\n');
@@ -78,12 +92,12 @@ app.get('/api/chatbot/test', (req, res) => {
 app.post('/api/chatbot/ask', async (req, res) => {
   try {
     console.log('\n📩 Chatbot request received');
-    
+
     const { message, conversationHistory } = req.body;
 
     if (!message) {
       console.log('❌ No message provided');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Message is required',
         response: 'Please provide a message.'
       });
@@ -151,8 +165,8 @@ app.post('/api/chatbot/ask', async (req, res) => {
     const aiResponse = completion.choices[0].message.content;
     console.log('✅ Response generated successfully');
 
-    res.json({ 
-      response: aiResponse, 
+    res.json({
+      response: aiResponse,
       success: true,
       model: 'gpt-4o-mini'
     });
@@ -161,7 +175,7 @@ app.post('/api/chatbot/ask', async (req, res) => {
     console.error('\n❌ OpenAI API Error:');
     console.error('   Status:', error.status);
     console.error('   Message:', error.message);
-    
+
     // Handle specific errors
     if (error.status === 401) {
       return res.status(500).json({
@@ -199,10 +213,13 @@ app.post('/api/chatbot/ask', async (req, res) => {
 console.log('✅ Chatbot routes registered\n');
 
 // Other routes
-try { app.use('/api/auth', require('./routes/auth')); } catch(e) {}
-try { app.use('/api/products', require('./routes/products')); } catch(e) {}
-try { app.use('/api/orders', require('./routes/orders')); } catch(e) {}
-try { app.use('/api/upload', require('./routes/upload')); } catch(e) {}
+console.log('📦 Registering API routes...');
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/upload', require('./routes/upload'));
+app.use('/api/payment', require('./routes/payment'));
+console.log('✅ All API routes registered');
 
 // Root
 app.get('/', (req, res) => {

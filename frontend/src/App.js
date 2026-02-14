@@ -6,6 +6,10 @@ import Homepage from './pages/Homepage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/AdminLogin';
+import AdminProfile from './pages/AdminProfile';
+
 import Products from './pages/Products';
 import AddProduct from './pages/AddProduct';
 import Orders from './pages/Orders';
@@ -17,28 +21,33 @@ import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
 import './App.css';
 
+
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-100">
           <Navbar />
-          <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
-            <Route path="/add-product" element={<PrivateRoute><AddProduct /></PrivateRoute>} />
-            <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-            <Route path="/health-assistant" element={<PrivateRoute><HealthAssistant /></PrivateRoute>} />
-            <Route path="/health-tips" element={<PrivateRoute><HealthTips /></PrivateRoute>} />
-            <Route path="/emergency-contacts" element={<PrivateRoute><EmergencyContacts /></PrivateRoute>} />
-            <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
-            <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
-            <Route path="/order-confirmation" element={<PrivateRoute><OrderConfirmation /></PrivateRoute>} />
-          </Routes>
-          <main className="container mx-auto px-4 py-8">
+          <main className="min-h-[calc(100vh-64px)] overflow-x-hidden">
+            <Routes>
+              <Route path="/" element={<Homepage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<PrivateRoute allowedRoles={['User']}><Dashboard /></PrivateRoute>} />
+              <Route path="/admin-dashboard" element={<PrivateRoute allowedRoles={['Admin']}><AdminDashboard /></PrivateRoute>} />
+              <Route path="/admin/profile" element={<PrivateRoute allowedRoles={['Admin']}><AdminProfile /></PrivateRoute>} />
+              <Route path="/products" element={<PrivateRoute allowedRoles={['User']}><Products /></PrivateRoute>} />
+              <Route path="/add-product" element={<PrivateRoute allowedRoles={['User']}><AddProduct /></PrivateRoute>} />
+              <Route path="/orders" element={<PrivateRoute allowedRoles={['User']}><Orders /></PrivateRoute>} />
+              <Route path="/health-assistant" element={<PrivateRoute allowedRoles={['User']}><HealthAssistant /></PrivateRoute>} />
+              <Route path="/health-tips" element={<PrivateRoute allowedRoles={['User']}><HealthTips /></PrivateRoute>} />
+              <Route path="/emergency-contacts" element={<PrivateRoute allowedRoles={['User']}><EmergencyContacts /></PrivateRoute>} />
+              <Route path="/profile" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
+              <Route path="/checkout" element={<PrivateRoute allowedRoles={['User']}><Checkout /></PrivateRoute>} />
+              <Route path="/order-confirmation" element={<PrivateRoute allowedRoles={['User']}><OrderConfirmation /></PrivateRoute>} />
+            </Routes>
           </main>
         </div>
       </Router>
@@ -46,10 +55,25 @@ function App() {
   );
 }
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = React.useContext(AuthContext);
-  if (loading) return <div>Loading...</div>;
-  return user ? children : <Navigate to="/login" />;
+  const location = React.useRef(window.location.pathname);
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-600"></div>
+    </div>
+  );
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    const target = user.role === 'Admin' ? '/admin-dashboard' : '/dashboard';
+    // Prevent redirection to the current page
+    if (window.location.pathname === target) return children;
+    return <Navigate to={target} replace />;
+  }
+  return children;
 };
 
 export default App;

@@ -15,7 +15,16 @@ const UserProfile = () => {
     society: user?.society || '',
     pincode: user?.pincode || '',
     mobile: user?.mobile || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    gender: user?.gender || 'Prefer not to say',
+    dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+    address: user?.address || '',
+    landmark: user?.landmark || ''
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
   const [profileImage, setProfileImage] = useState(user?.profileImage || null);
 
@@ -32,17 +41,32 @@ const UserProfile = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Update formData when user changes
+    setFormData({
+      name: user?.name || '',
+      society: user?.society || '',
+      pincode: user?.pincode || '',
+      mobile: user?.mobile || '',
+      bio: user?.bio || '',
+      gender: user?.gender || 'Prefer not to say',
+      dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+      address: user?.address || '',
+      landmark: user?.landmark || ''
+    });
+  }, [user]);
+
   const fetchSoldProducts = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       console.log('Fetching products with token:', token ? 'Token exists' : 'No token');
-      
+
       const response = await axios.get('http://localhost:5000/api/products/user/my-products', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       console.log('Fetched products:', response.data);
       setSoldProducts(response.data);
     } catch (error) {
@@ -59,34 +83,34 @@ const UserProfile = () => {
     if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
       try {
         setDeleting(productId);
-        
+
         const token = localStorage.getItem('token');
         console.log('Deleting product:', productId);
         console.log('Using token:', token ? 'Token exists' : 'No token');
-        
+
         const response = await axios.delete(
-          `http://localhost:5000/api/products/${productId}`, 
+          `http://localhost:5000/api/products/${productId}`,
           {
-            headers: { 
+            headers: {
               'Authorization': `Bearer ${token}`
             }
           }
         );
-        
+
         console.log('Delete response:', response.data);
-        
+
         // Remove from UI immediately
         setSoldProducts(prev => prev.filter(p => p._id !== productId));
-        
+
         alert('✅ Product deleted successfully!');
-        
+
       } catch (error) {
         console.error('Delete error details:', {
           status: error.response?.status,
           data: error.response?.data,
           message: error.message
         });
-        
+
         if (error.response?.status === 401) {
           alert('❌ Session expired. Please login again');
         } else if (error.response?.status === 403) {
@@ -130,10 +154,10 @@ const UserProfile = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        
+
         const response = await axios.post(
-          'http://localhost:5000/api/auth/upload-profile-image', 
-          imageFormData, 
+          'http://localhost:5000/api/auth/upload-profile-image',
+          imageFormData,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -141,13 +165,13 @@ const UserProfile = () => {
             }
           }
         );
-        
+
         console.log('Image upload response:', response.data);
-        
+
         const newImageUrl = response.data.profileImage;
         setProfileImage(newImageUrl);
         setUser({ ...user, profileImage: newImageUrl });
-        
+
         alert('✅ Profile picture updated successfully!');
       } catch (error) {
         console.error('Error uploading image:', error.response?.data || error);
@@ -158,20 +182,59 @@ const UserProfile = () => {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('❌ New passwords do not match');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.put(
+        'http://localhost:5000/api/auth/change-password',
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('✅ Password updated successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      console.error('Error changing password:', error.response?.data || error);
+      alert(`❌ Error: ${error.response?.data?.message || 'Failed to update password'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateCompletion = () => {
+    const fields = ['name', 'mobile', 'society', 'pincode', 'bio', 'gender', 'dob', 'address', 'landmark'];
+    const filledFields = fields.filter(f => user[f] && user[f] !== '' && user[f] !== 'Prefer not to say');
+    const imageWeight = user.profileImage ? 1 : 0;
+    const totalPossible = fields.length + 1;
+    const totalFilled = filledFields.length + imageWeight;
+    return Math.round((totalFilled / totalPossible) * 100);
+  };
+
+  const completion = calculateCompletion();
+
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       const response = await axios.put(
-        'http://localhost:5000/api/auth/update-profile', 
-        formData, 
+        'http://localhost:5000/api/auth/update-profile',
+        formData,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
-      setUser({ ...user, ...formData });
+
+      setUser(response.data.user);
       setEditing(false);
       alert('✅ Profile updated successfully!');
     } catch (error) {
@@ -222,17 +285,17 @@ const UserProfile = () => {
   // Get profile image URL
   const getProfileImageUrl = () => {
     if (!profileImage) return null;
-    
+
     // If it's already a full URL, return as is
     if (profileImage.startsWith('http')) {
       return profileImage;
     }
-    
+
     // If it starts with /, add base URL
     if (profileImage.startsWith('/')) {
       return `http://localhost:5000${profileImage}`;
     }
-    
+
     // Otherwise, add both / and base URL
     return `http://localhost:5000/${profileImage}`;
   };
@@ -243,7 +306,7 @@ const UserProfile = () => {
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-          
+
           {/* Header with Gradient */}
           <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white p-6 sm:p-8">
             <div className="flex items-center gap-4">
@@ -260,7 +323,7 @@ const UserProfile = () => {
                     }}
                   />
                 ) : null}
-                <div 
+                <div
                   className="text-3xl sm:text-4xl font-bold w-full h-full flex items-center justify-center"
                   style={{ display: imageUrl ? 'none' : 'flex' }}
                 >
@@ -284,39 +347,64 @@ const UserProfile = () => {
             <nav className="flex overflow-x-auto">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${
-                  activeTab === 'profile'
-                    ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
+                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${activeTab === 'profile'
+                  ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
               >
                 👤 Profile
               </button>
               <button
                 onClick={() => setActiveTab('bought')}
-                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${
-                  activeTab === 'bought'
-                    ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
+                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${activeTab === 'bought'
+                  ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
               >
                 🛒 Bought Products
               </button>
               <button
                 onClick={() => setActiveTab('sold')}
-                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${
-                  activeTab === 'sold'
-                    ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
+                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${activeTab === 'sold'
+                  ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
               >
                 💼 My Products
+              </button>
+              <button
+                onClick={() => setActiveTab('security')}
+                className={`px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all ${activeTab === 'security'
+                  ? 'border-b-3 border-teal-600 text-teal-600 bg-white'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  }`}
+              >
+                🔒 Security
               </button>
             </nav>
           </div>
 
           {/* Tab Content */}
           <div className="p-6 sm:p-8">
+            {/* Profile Completion Bar */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-700">Profile Completion</span>
+                <span className="text-sm font-bold text-teal-600">{completion}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-1000"
+                  style={{ width: `${completion}%` }}
+                ></div>
+              </div>
+              {completion < 100 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Complete your profile to earn the "Verified Member" badge!
+                </p>
+              )}
+            </div>
+
             {activeTab === 'profile' && (
               <div className="space-y-8">
                 {/* Profile Picture Section */}
@@ -335,7 +423,7 @@ const UserProfile = () => {
                           }}
                         />
                       ) : null}
-                      <div 
+                      <div
                         className="text-4xl sm:text-5xl text-white font-bold w-full h-full flex items-center justify-center"
                         style={{ display: imageUrl ? 'none' : 'flex' }}
                       >
@@ -360,6 +448,11 @@ const UserProfile = () => {
                       <span className="px-4 py-1.5 bg-teal-100 text-teal-700 rounded-full text-sm font-semibold">
                         {user?.role}
                       </span>
+                      {completion === 100 && (
+                        <span className="px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold flex items-center gap-1">
+                          🛡️ Verified Member
+                        </span>
+                      )}
                       <span className="px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
                         ✓ Active
                       </span>
@@ -373,7 +466,7 @@ const UserProfile = () => {
                     <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                       📋 Personal Information
                     </h3>
-                    
+
                     <div className="bg-gray-50 rounded-xl p-4">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">👤 Name</label>
                       {editing ? (
@@ -412,6 +505,40 @@ const UserProfile = () => {
                         <p className="text-gray-900 text-lg">{user?.mobile || 'Not provided'}</p>
                       )}
                     </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">⚧ Gender</label>
+                      {editing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                          <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 text-lg">{user?.gender || 'Prefer not to say'}</p>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">🎂 Date of Birth</label>
+                      {editing ? (
+                        <input
+                          type="date"
+                          name="dob"
+                          value={formData.dob}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                      ) : (
+                        <p className="text-gray-900 text-lg">{user?.dob ? formatDate(user.dob) : 'Not provided'}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -420,7 +547,23 @@ const UserProfile = () => {
                     </h3>
 
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">🏘️ Society</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">🏠 House / Street Address</label>
+                      {editing ? (
+                        <input
+                          type="text"
+                          name="address"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          placeholder="House No, Street name"
+                        />
+                      ) : (
+                        <p className="text-gray-900 text-lg">{user?.address || 'Not provided'}</p>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">🏢 Society</label>
                       {editing ? (
                         <input
                           type="text"
@@ -431,6 +574,22 @@ const UserProfile = () => {
                         />
                       ) : (
                         <p className="text-gray-900 text-lg">{user?.society || 'Not provided'}</p>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">📍 Landmark</label>
+                      {editing ? (
+                        <input
+                          type="text"
+                          name="landmark"
+                          value={formData.landmark}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          placeholder="Near hospital, park, etc."
+                        />
+                      ) : (
+                        <p className="text-gray-900 text-lg">{user?.landmark || 'Not provided'}</p>
                       )}
                     </div>
 
@@ -525,6 +684,71 @@ const UserProfile = () => {
 
             {activeTab === 'bought' && <MyOrders />}
 
+            {activeTab === 'security' && (
+              <div className="max-w-md mx-auto py-8">
+                <div className="bg-white border-2 border-gray-100 rounded-2xl p-8 shadow-sm">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    🔒 Change Password
+                  </h3>
+                  <form onSubmit={handleChangePassword} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                        placeholder="••••••••"
+                        minLength="6"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        required
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-gradient-to-r from-gray-800 to-gray-900 text-white py-4 rounded-xl hover:from-black hover:to-gray-800 font-bold shadow-lg transition-all disabled:opacity-50"
+                    >
+                      {loading ? '⏳ Updating...' : '🔒 Update Password'}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="mt-8 bg-red-50 border border-red-100 rounded-2xl p-6">
+                  <h4 className="text-red-800 font-bold mb-2 flex items-center gap-2">
+                    ⚠️ Dangerous Actions
+                  </h4>
+                  <p className="text-red-600 text-sm mb-4">
+                    Once you delete your account, there is no going back. Please be certain.
+                  </p>
+                  <button className="text-red-700 font-bold text-sm hover:underline">
+                    Delete Account Permanently
+                  </button>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'sold' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -549,7 +773,7 @@ const UserProfile = () => {
                     <div className="text-6xl mb-4">📦</div>
                     <h4 className="text-xl font-semibold text-gray-600 mb-2">No products yet</h4>
                     <p className="text-gray-500 mb-6">Add your first product to get started!</p>
-                    <a 
+                    <a
                       href="/add-product"
                       className="inline-block px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-xl hover:from-teal-600 hover:to-teal-700 font-semibold shadow-lg transition-all"
                     >
@@ -561,7 +785,7 @@ const UserProfile = () => {
                     {soldProducts.map((product) => {
                       const status = getProductStatus(product);
                       const isDeleting = deleting === product._id;
-                      
+
                       return (
                         <div key={product._id} className="bg-white border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl transition-all group">
                           {/* Product Image */}

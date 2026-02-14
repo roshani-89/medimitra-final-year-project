@@ -191,45 +191,7 @@ const EmergencyContacts = () => {
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
 
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out;
-        }
-
-        .animate-slide-in {
-          animation: slide-in 0.6s ease-out both;
-        }
-
-        .delay-75 {
-          animation-delay: 1s;
-        }
-
-        .delay-150 {
-          animation-delay: 2s;
-        }
-      `}</style>
     </div>
   );
 };

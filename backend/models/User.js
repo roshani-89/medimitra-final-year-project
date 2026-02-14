@@ -29,7 +29,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Patient', 'Donor', 'NGO'],
+    enum: ['User', 'Admin'],
+    default: 'User',
     required: true,
   },
   profileImage: {
@@ -40,19 +41,40 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+    default: 'Prefer not to say',
+  },
+  dob: {
+    type: Date,
+    default: null,
+  },
+  address: {
+    type: String,
+    default: '',
+  },
+  landmark: {
+    type: String,
+    default: '',
+  },
+  lastLogin: {
+    type: Date,
+    default: null,
+  },
 }, {
   timestamps: true,
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
