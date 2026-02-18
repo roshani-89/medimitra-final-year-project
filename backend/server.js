@@ -52,27 +52,50 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-// Check OpenAI setup
-let OpenAI, openai;
+// Check Google Gemini setup
+let GoogleGenerativeAI, genAI, model;
 try {
-  OpenAI = require('openai');
+  const { GoogleGenerativeAI: GeminiAI } = require('@google/generative-ai');
+  GoogleGenerativeAI = GeminiAI;
 
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('\n❌ CRITICAL: OPENAI_API_KEY not found in .env file!');
-    console.error('   Add this line to .env: OPENAI_API_KEY=sk-your-key-here\n');
-  } else if (!process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    console.error('\n❌ CRITICAL: Invalid OPENAI_API_KEY format!');
-    console.error('   Key should start with "sk-"\n');
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('\n❌ CRITICAL: GEMINI_API_KEY (Google API Key) not found in .env file!');
+    console.error('   Add this line to .env: GEMINI_API_KEY=your-google-api-key\n');
   } else {
-    openai = new OpenAI({
-      apiKey: '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',
-      baseURL: 'https://openrouter.ai/api/v1'
-    });
-    console.log('✅ OpenAI initialized successfully');
+    genAI = new GoogleGenerativeAI(apiKey);
+
+    // Try to get a working model
+    const modelsToTry = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-flash-latest',
+      'gemini-pro-latest',
+      'gemini-1.5-flash'
+    ];
+    let lastError = null;
+
+    for (const modelName of modelsToTry) {
+      try {
+        const testModel = genAI.getGenerativeModel({ model: modelName });
+        // We can't easily test it without making an API call, but we'll try to initialize
+        model = testModel;
+        console.log(`✅ Google Gemini (${modelName}) initialized`);
+        break;
+      } catch (err) {
+        lastError = err;
+        console.error(`⚠️ Failed to initialize ${modelName}:`, err.message);
+      }
+    }
+
+    if (!model) {
+      throw lastError || new Error('No models could be initialized');
+    }
   }
 } catch (e) {
-  console.error('\n❌ OpenAI package not installed!');
-  console.error('   Run: npm install openai\n');
+  console.error('\n❌ Google Generative AI initialization failed!');
+  console.error('   Error:', e.message);
 }
 
 // Chatbot test endpoint
@@ -80,10 +103,10 @@ app.get('/api/chatbot/test', (req, res) => {
   console.log('🧪 Test endpoint called');
   res.json({
     message: '✅ Chatbot endpoint is reachable',
-    openaiPackageInstalled: !!OpenAI,
-    apiKeyConfigured: !!process.env.OPENAI_API_KEY,
-    apiKeyValid: process.env.OPENAI_API_KEY?.startsWith('sk-') || false,
-    ready: !!openai,
+    geminiPackageInstalled: !!GoogleGenerativeAI,
+    apiKeyConfigured: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
+    ready: !!model,
+    activeModel: model ? model.model : 'none',
     timestamp: new Date().toISOString()
   });
 });
@@ -105,107 +128,78 @@ app.post('/api/chatbot/ask', async (req, res) => {
 
     console.log(`   Message: "${message.substring(0, 50)}..."`);
 
-    // Check OpenAI setup
-    if (!openai) {
-      console.error('❌ OpenAI not configured');
-      return res.status(500).json({
-        error: 'OpenAI not configured',
-        response: '⚠️ AI service is not configured properly. Please check server setup.',
-        details: {
-          packageInstalled: !!OpenAI,
-          apiKeySet: !!process.env.OPENAI_API_KEY,
-          apiKeyValid: process.env.OPENAI_API_KEY?.startsWith('sk-')
-        }
+    // Check Gemini setup
+    if (!model) {
+      console.error('❌ Gemini not configured');
+      return res.status(503).json({
+        error: 'AI service unavailable',
+        response: '⚠️ I am currently in offline mode. How can I help you with orders or payments?',
+        isOffline: true
       });
     }
 
     // Emergency check
-    const emergencyWords = ['chest pain', 'heart attack', 'stroke', 'unconscious', 'severe bleeding'];
+    const emergencyWords = ['chest pain', 'heart attack', 'stroke', 'unconscious', 'severe bleeding', 'breathing difficulty'];
     if (emergencyWords.some(w => message.toLowerCase().includes(w))) {
       console.log('🚨 Emergency detected');
       return res.json({
-        response: '🚨 EMERGENCY! This needs immediate attention. Call 112 (Emergency Services) right now!',
+        response: '🚨 EMERGENCY! This needs immediate medical attention. Please call emergency services (108/112) right now!',
         isEmergency: true,
         success: true
       });
     }
 
-    // Prepare messages
-    const messages = [
-      {
-        role: 'system',
-        content: 'You are a helpful health assistant for MediMitra. Provide general health information only. Always remind users to consult healthcare professionals for medical advice.'
-      }
-    ];
+    // Prepare prompt
+    let contextPrompt = "You are MediMitra, a helpful health assistant. Provide concise, helpful health information. Always advise consulting a doctor for serious concerns. Keep responses professional and friendly.\n\n";
 
-    // Add history
+    // Add history if available
     if (conversationHistory && Array.isArray(conversationHistory)) {
-      conversationHistory.slice(-4).forEach(msg => {
-        if (msg.sender === 'user' && msg.text) {
-          messages.push({ role: 'user', content: msg.text });
-        }
-        if (msg.sender === 'bot' && msg.text) {
-          messages.push({ role: 'assistant', content: msg.text });
-        }
+      conversationHistory.slice(-5).forEach(msg => {
+        const role = msg.sender === 'user' ? 'User' : 'Assistant';
+        contextPrompt += `${role}: ${msg.text}\n`;
       });
     }
 
-    messages.push({ role: 'user', content: message });
+    contextPrompt += `User: ${message}\nAssistant:`;
 
-    console.log('   Calling OpenAI API...');
+    console.log('   Calling Gemini API...');
 
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
-      model: 'openai/gpt-4o-mini',
-      messages: messages,
-      max_tokens: 500,
-      temperature: 0.7
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: contextPrompt }] }],
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+      },
     });
 
-    const aiResponse = completion.choices[0].message.content;
-    console.log('✅ Response generated successfully');
+    const response = await result.response;
+    const aiResponse = response.text();
+
+    console.log('✅ Response generated');
 
     res.json({
       response: aiResponse,
       success: true,
-      model: 'gpt-4o-mini'
+      model: model ? model.model : 'unknown'
     });
 
   } catch (error) {
-    console.error('\n❌ OpenAI API Error:');
-    console.error('   Status:', error.status);
-    console.error('   Message:', error.message);
+    console.error('\n❌ Chatbot API Error:', error.message);
 
-    // Handle specific errors
-    if (error.status === 401) {
-      return res.status(500).json({
-        error: 'Invalid API key',
-        response: '⚠️ The AI service API key is invalid. Please contact administrator.',
-        details: 'Authentication failed - check your OpenAI API key'
-      });
+    const userMessage = req.body?.message || '';
+    let fallbackMsg = "I'm having trouble connecting to my AI core right now. I can help with general questions about our products, orders, and payments. What would you like to know?";
+
+    if (userMessage.toLowerCase().includes('order')) {
+      fallbackMsg = "I can't access my AI features right now, but you can track your orders in the 'My Orders' section of your profile.";
+    } else if (userMessage.toLowerCase().includes('payment')) {
+      fallbackMsg = "Online payments are processed securely via Razorpay. We also support Cash on Delivery.";
     }
 
-    if (error.status === 429) {
-      return res.status(429).json({
-        error: 'Rate limit',
-        response: '⚠️ Too many requests. Please wait a moment and try again.',
-        details: 'OpenAI rate limit exceeded'
-      });
-    }
-
-    if (error.status === 500 || error.status === 503) {
-      return res.status(500).json({
-        error: 'Service unavailable',
-        response: '⚠️ AI service is temporarily unavailable. Please try again in a moment.',
-        details: 'OpenAI service error'
-      });
-    }
-
-    // Generic error
-    res.status(500).json({
-      error: 'Internal error',
-      response: '⚠️ Sorry, I encountered an error. Please try again.',
-      details: error.message
+    res.json({
+      response: fallbackMsg,
+      success: true,
+      isFallback: true,
+      error: error.message
     });
   }
 });
@@ -226,7 +220,8 @@ app.get('/', (req, res) => {
   res.json({
     message: '✅ MediMitra Backend',
     status: 'running',
-    chatbotReady: !!openai,
+    chatbotReady: !!model,
+    aiProvider: 'Google Gemini',
     port: PORT
   });
 });
@@ -250,6 +245,6 @@ app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`🌐 Server:       http://localhost:${PORT}`);
   console.log(`🤖 Chatbot Test: http://localhost:${PORT}/api/chatbot/test`);
-  console.log(`📊 Status:       OpenAI ${openai ? 'Ready ✅' : 'Not Configured ❌'}`);
+  console.log(`📊 Status:       Google Gemini ${model ? 'Ready ✅' : 'Not Configured ❌'}`);
   console.log('='.repeat(60) + '\n');
 });
