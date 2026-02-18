@@ -28,7 +28,7 @@ const HealthAssistant = () => {
   const checkBackend = async () => {
     setBackendStatus('checking');
     try {
-      const response = await fetch('http://localhost:5000/api/chatbot/test');
+      const response = await fetch('https://medimitra-final-year-project-3.onrender.com/api/chatbot/test');
       if (response.ok) {
         setBackendStatus('connected');
         setError(null);
@@ -100,7 +100,7 @@ const HealthAssistant = () => {
     // Try API first
     if (backendStatus === 'connected') {
       try {
-        const response = await fetch('http://localhost:5000/api/chatbot/ask', {
+        const response = await fetch('https://medimitra-final-year-project-3.onrender.com/api/chatbot/ask', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

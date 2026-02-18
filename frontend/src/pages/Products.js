@@ -39,7 +39,7 @@ const Products = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/products');
+      const res = await axios.get('https://medimitra-final-year-project-3.onrender.com/api/products');
       const currentDate = new Date();
       const activeProducts = res.data.filter(product => new Date(product.expiryDate) > currentDate);
       setProducts(activeProducts);
@@ -88,7 +88,7 @@ const Products = () => {
     try {
       setModalLoading(true);
       setShowModal(true);
-      const res = await axios.get(`http://localhost:5000/api/products/${id}`);
+      const res = await axios.get(`https://medimitra-final-year-project-3.onrender.com/api/products/${id}`);
       setSelectedProduct(res.data);
     } catch (err) {
       console.error('Error fetching product details:', err);
@@ -106,13 +106,13 @@ const Products = () => {
       setSubmittingReview(true);
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:5000/api/products/${selectedProduct._id}/reviews`,
+        `https://medimitra-final-year-project-3.onrender.com/api/products/${selectedProduct._id}/reviews`,
         newReview,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       // Refresh product details to show new review
-      const res = await axios.get(`http://localhost:5000/api/products/${selectedProduct._id}`);
+      const res = await axios.get(`https://medimitra-final-year-project-3.onrender.com/api/products/${selectedProduct._id}`);
       setSelectedProduct(res.data);
       setNewReview({ rating: 5, comment: '' });
       alert('✅ Review added successfully!');
@@ -127,7 +127,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Remove this listing from the marketplace?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${id}`);
+        await axios.delete(`https://medimitra-final-year-project-3.onrender.com/api/products/${id}`);
         setProducts(products.filter(product => product._id !== id));
       } catch (err) {
         console.error('Error deleting product:', err);

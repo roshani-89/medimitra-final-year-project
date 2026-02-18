@@ -19,7 +19,7 @@ const MyOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/orders/my-orders', {
+      const res = await axios.get('https://medimitra-final-year-project-3.onrender.com/api/orders/my-orders', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setOrders(res.data);

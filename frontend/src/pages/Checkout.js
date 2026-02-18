@@ -94,7 +94,7 @@ const Checkout = () => {
       // Optionally update profile with the current address
       if (saveToProfile) {
         try {
-          await axios.put('http://localhost:5000/api/auth/update-profile', {
+          await axios.put('https://medimitra-final-year-project-3.onrender.com/api/auth/update-profile', {
             name: deliveryAddress.fullName,
             society: deliveryAddress.society,
             pincode: deliveryAddress.pincode,
@@ -107,7 +107,7 @@ const Checkout = () => {
           // Don't block order placement if profile update fails
         }
       }
-      const res = await axios.post('http://localhost:5000/api/payment/create-order',
+      const res = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/payment/create-order',
         { productId: product._id, quantity, paymentMethod },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -118,7 +118,7 @@ const Checkout = () => {
         setIsDemo(true);
         setTimeout(async () => {
           try {
-            const verifyRes = await axios.post('http://localhost:5000/api/payment/verify-payment', {
+            const verifyRes = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/payment/verify-payment', {
               razorpay_order_id: orderId,
               productId: product._id,
               quantity,
@@ -146,7 +146,7 @@ const Checkout = () => {
           order_id: orderId,
           handler: async (response) => {
             try {
-              const verifyRes = await axios.post('http://localhost:5000/api/payment/verify-payment', {
+              const verifyRes = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/payment/verify-payment', {
                 ...response,
                 productId: product._id,
                 quantity,
@@ -172,7 +172,7 @@ const Checkout = () => {
         const rzp = new window.Razorpay(options);
         rzp.open();
       } else {
-        const verifyRes = await axios.post('http://localhost:5000/api/payment/verify-payment', {
+        const verifyRes = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/payment/verify-payment', {
           razorpay_order_id: orderId,
           productId: product._id,
           quantity,

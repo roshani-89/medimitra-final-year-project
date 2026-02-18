@@ -38,10 +38,10 @@ const AdminDashboard = () => {
     setError('');
     try {
       const [statsRes, usersRes, productsRes, ordersRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/auth/admin/stats', axiosConfig),
-        axios.get('http://localhost:5000/api/auth/admin/users', axiosConfig),
-        axios.get('http://localhost:5000/api/products/admin/all', axiosConfig),
-        axios.get('http://localhost:5000/api/orders/admin/all', axiosConfig)
+        axios.get('https://medimitra-final-year-project-3.onrender.com/api/auth/admin/stats', axiosConfig),
+        axios.get('https://medimitra-final-year-project-3.onrender.com/api/auth/admin/users', axiosConfig),
+        axios.get('https://medimitra-final-year-project-3.onrender.com/api/products/admin/all', axiosConfig),
+        axios.get('https://medimitra-final-year-project-3.onrender.com/api/orders/admin/all', axiosConfig)
       ]);
 
       setStats(statsRes.data);

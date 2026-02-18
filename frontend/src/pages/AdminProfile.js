@@ -55,7 +55,7 @@ const AdminProfile = () => {
             setLoading(true);
             const token = localStorage.getItem('token');
             const response = await axios.put(
-                'http://localhost:5000/api/auth/update-profile',
+                'https://medimitra-final-year-project-3.onrender.com/api/auth/update-profile',
                 formData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -81,7 +81,7 @@ const AdminProfile = () => {
             setLoading(true);
             const token = localStorage.getItem('token');
             const response = await axios.post(
-                'http://localhost:5000/api/auth/upload-profile-image',
+                'https://medimitra-final-year-project-3.onrender.com/api/auth/upload-profile-image',
                 imageFormData,
                 {
                     headers: {
@@ -110,7 +110,7 @@ const AdminProfile = () => {
     const getProfileImageUrl = () => {
         if (!user?.profileImage) return null;
         if (user.profileImage.startsWith('http')) return user.profileImage;
-        return `http://localhost:5000/${user.profileImage.startsWith('/') ? user.profileImage.substring(1) : user.profileImage}`;
+        return `https://medimitra-final-year-project-3.onrender.com/${user.profileImage.startsWith('/') ? user.profileImage.substring(1) : user.profileImage}`;
     };
 
     return (

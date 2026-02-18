@@ -33,7 +33,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/orders/my-orders', {
+      const res = await axios.get('https://medimitra-final-year-project-3.onrender.com/api/orders/my-orders', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(res.data);
@@ -60,7 +60,7 @@ const Orders = () => {
   const handleUpdateAddress = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`http://localhost:5000/api/orders/my-orders/${selectedOrder.orderId}/address`,
+      const res = await axios.put(`https://medimitra-final-year-project-3.onrender.com/api/orders/my-orders/${selectedOrder.orderId}/address`,
         editFormData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

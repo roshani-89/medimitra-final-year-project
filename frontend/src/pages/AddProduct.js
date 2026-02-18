@@ -48,7 +48,7 @@ const AddProduct = () => {
         const uploadPromises = selectedFiles.map(async (file) => {
           const formData = new FormData();
           formData.append('file', file);
-          const res = await axios.post('http://localhost:5000/api/upload', formData, {
+          const res = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
           return res.data.url;
@@ -57,7 +57,7 @@ const AddProduct = () => {
         setUploading(false);
       }
 
-      await axios.post('http://localhost:5000/api/products', {
+      await axios.post('https://medimitra-final-year-project-3.onrender.com/api/products', {
         name,
         brand,
         generic_name: genericName,

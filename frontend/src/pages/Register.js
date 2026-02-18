@@ -95,7 +95,7 @@ const Register = () => {
       await register(name, email, password, mobile, society, pincode, role);
       navigate('/dashboard');
     } catch (err) {
-      setError('Registration failed');
+      setError(err.message || 'Registration failed');
     }
   };
 

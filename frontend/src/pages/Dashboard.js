@@ -35,7 +35,7 @@ const Dashboard = () => {
 
   const fetchFeaturedProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/products');
+      const res = await axios.get('https://medimitra-final-year-project-3.onrender.com/api/products');
       setFeaturedProducts(res.data.slice(0, 8));
       const uniqueCategories = [...new Set(res.data.map(p => p.category))];
       setCategories(uniqueCategories);

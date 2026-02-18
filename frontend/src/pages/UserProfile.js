@@ -63,7 +63,7 @@ const UserProfile = () => {
 
       console.log('Fetching products with token:', token ? 'Token exists' : 'No token');
 
-      const response = await axios.get('http://localhost:5000/api/products/user/my-products', {
+      const response = await axios.get('https://medimitra-final-year-project-3.onrender.com/api/products/user/my-products', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -89,7 +89,7 @@ const UserProfile = () => {
         console.log('Using token:', token ? 'Token exists' : 'No token');
 
         const response = await axios.delete(
-          `http://localhost:5000/api/products/${productId}`,
+          `https://medimitra-final-year-project-3.onrender.com/api/products/${productId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -156,7 +156,7 @@ const UserProfile = () => {
         const token = localStorage.getItem('token');
 
         const response = await axios.post(
-          'http://localhost:5000/api/auth/upload-profile-image',
+          'https://medimitra-final-year-project-3.onrender.com/api/auth/upload-profile-image',
           imageFormData,
           {
             headers: {
@@ -193,7 +193,7 @@ const UserProfile = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       await axios.put(
-        'http://localhost:5000/api/auth/change-password',
+        'https://medimitra-final-year-project-3.onrender.com/api/auth/change-password',
         {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
@@ -227,7 +227,7 @@ const UserProfile = () => {
       const token = localStorage.getItem('token');
 
       const response = await axios.put(
-        'http://localhost:5000/api/auth/update-profile',
+        'https://medimitra-final-year-project-3.onrender.com/api/auth/update-profile',
         formData,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -293,11 +293,11 @@ const UserProfile = () => {
 
     // If it starts with /, add base URL
     if (profileImage.startsWith('/')) {
-      return `http://localhost:5000${profileImage}`;
+      return `https://medimitra-final-year-project-3.onrender.com${profileImage}`;
     }
 
     // Otherwise, add both / and base URL
-    return `http://localhost:5000/${profileImage}`;
+    return `https://medimitra-final-year-project-3.onrender.com/${profileImage}`;
   };
 
   const imageUrl = getProfileImageUrl();

@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Verify token and get user info
-      axios.get('http://localhost:5000/api/auth/me')
+      axios.get('https://medimitra-final-year-project-3.onrender.com/api/auth/me')
         .then(res => setUser(res.data))
         .catch(() => {
           localStorage.removeItem('token');
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
       setUser(res.data.user);
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = useCallback(async (name, email, password, mobile, society, pincode, role = 'User') => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, mobile, society, pincode, role });
+      const res = await axios.post('https://medimitra-final-year-project-3.onrender.com/api/auth/register', { name, email, password, mobile, society, pincode, role });
       localStorage.setItem('token', res.data.token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
       setUser(res.data.user);
